@@ -15,6 +15,6 @@ int main(){
     cin >> i >> j ;
     int res = s[j] - s[i-1] ;
     cout << res ;
-
+    return 0 ;
 
 }
