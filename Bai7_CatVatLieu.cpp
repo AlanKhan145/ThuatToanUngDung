@@ -1,6 +1,11 @@
 /* Bài toán cắt vật liệu 2D
    Một tấm phôi kim loại hình chữ nhật có chiều dài H và chiều rộng W cần được cắt thành n miếng hình chữ nhật.
-   Miếng thứ i có chiều dài h[i] và chiều rộng w[i]. Hãy tìm cách cắt sao cho thỏa mãn yêu cầu. */
+   Miếng thứ i có chiều dài h[i] và chiều rộng w[i]. Hãy tìm cách cắt sao cho thỏa mãn yêu cầu.
+   Test case:
+2 5 5
+2 2
+2 3
+*/
 #include <iostream>
 #include <vector>
 
