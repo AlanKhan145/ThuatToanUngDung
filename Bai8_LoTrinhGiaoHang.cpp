@@ -29,7 +29,7 @@ bool checkX(int v, int k) {
     if (load[k] + d[v] > Q) return false; // Vượt quá tải trọng
     return true; // Hợp lệ
 }
-
+rt
 // Hàm thử giá trị cho x[s], xác định lộ trình xe k
 void TRY_X(int s, int k) {
     if (s == 0) { // Nếu quay về điểm xuất phát
