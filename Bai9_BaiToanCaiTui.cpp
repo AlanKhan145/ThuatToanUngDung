@@ -24,7 +24,7 @@ bool compare(Item a, Item b) {
     return a.value_per_weight > b.value_per_weight;
 }
 
-int knapsack(int capacity, std::vector<Item>& items) {
+int knapsack(int capacity, vector<Item>& items) {
     // Sắp xếp các đồ vật theo giá trị trên trọng lượng giảm dần
     for (auto& item : items) {
         item.value_per_weight = (double)item.value / item.weight;
@@ -34,16 +34,10 @@ int knapsack(int capacity, std::vector<Item>& items) {
     int total_value = 0;
     for (const auto& item : items) {
         if (capacity >= item.weight) {
-            // Lấy toàn bộ đồ vật
             capacity -= item.weight;
             total_value += item.value;
-        } else {
-            // Lấy một phần đồ vật (nếu cần)
-            total_value += item.value_per_weight * capacity;
-            break;
-        }
     }
-
+    }
     return total_value;
 }
 
