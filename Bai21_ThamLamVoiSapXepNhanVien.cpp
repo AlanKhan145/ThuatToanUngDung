@@ -42,7 +42,7 @@ vector<vector<int>> nvtrongca;
 vector<int> soCaDem;
 vector<int> r;
 int f = 0;
-int min_f = d + 2;
+int min_f ;
 int max_loop = 10;
 int loop = 0;
 bool check(int nv, int ngay, int ca) {
@@ -139,7 +139,7 @@ int main() {
         }
         r[i] = i;
     }
-
+    min_f = d;
     thu(1, 1);
 
     for (int i = 1; i <= n; i++) {
