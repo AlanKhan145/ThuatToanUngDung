@@ -1,66 +1,114 @@
-#include <bits/stdc++.h>
+/*LAB.02.04 - Bài toán Lộ trình Giao hàng với Xe tải Có hạn
+Mô tả:
+Một đội xe tải gồm K chiếc xe tải giống hệt nhau, mỗi xe có sức chứa Q.
+Cần lập lịch giao các gói pepsi từ kho trung tâm (điểm 0) đến các khách hàng (1, 2, ..., n).
+Mỗi khách hàng i yêu cầu d[i] gói.
+Khoảng cách giữa các điểm i và j là c[i,j], với 0 ≤ i,j ≤ n.
+Giải pháp giao hàng:
+Một giải pháp giao hàng là một tập hợp các lộ trình:
+Mỗi xe tải có một lộ trình riêng.
+Lộ trình bắt đầu từ kho trung tâm, thăm một số khách hàng và quay lại kho.
+Mỗi khách hàng được thăm đúng một lần trong lộ trình.
+Tổng số gói yêu cầu của khách hàng mà mỗi xe tải phục vụ không vượt quá sức chứa của xe tải (Q).
+Mục tiêu:
+Tìm giải pháp có tổng quãng đường di chuyển tối thiểu.
+Lưu ý:
+Có thể có trường hợp một xe tải không thăm khách hàng nào (lộ trình rỗng).
+Thứ tự các khách hàng trong lộ trình là quan trọng:
+Ví dụ: lộ trình 0 → 1 → 2 → 3 → 0 và 0 → 3 → 2 → 1 → 0 là khác nhau.
+Dữ liệu đầu vào:
+Dòng 1: n, K, Q (2 ≤ n ≤ 12, 1 ≤ K ≤ 5, 1 ≤ Q ≤ 50).
+Dòng 2: d[1], ..., d[n] (1 ≤ d[i] ≤ 10).
+Dòng i+3 (i = 0,…,n): hàng thứ i của ma trận khoảng cách c (1 ≤ c[i,j] ≤ 30).
+Dữ liệu đầu ra:
+Tổng quãng đường di chuyển tối thiểu.
+Ví dụ:
+Dữ liệu đầu vào:
+4 2 15
+7 7 11 2
+0 12 12 11 14
+14 0 11 14 14
+14 10 0 11 12
+10 14 12 0 13
+10 13 14 11 0
+Dữ liệu đầu ra:
+70*/
+#include <iostream>
+#include <vector>
+#include <climits>
+
 using namespace std;
 
-int K; // Số xe tải
-int N; // Số điểm giao hàng
-int Q; // Số thùng hàng tối đa mà mỗi xe tải có thể chở
-vector<int> d; // d[i]: Số thùng hàng của điểm giao hàng i
-vector<vector<int>> c; // c[i][j]: Ma trận khoảng cách từ điểm i đến điểm j
-vector<int> y; // y[k]: Điểm giao hàng đầu tiên của xe k
-vector<int> x; // x[s]: Điểm giao hàng thứ s trong lộ trình
-vector<bool> visited; // visited[v]: Điểm giao hàng v đã được giao hay chưa
-vector<int> load; // Tải trọng hiện tại của xe
-double f = 0; // Tổng quãng đường của lộ trình hiện tại
-double f_min = INT_MAX; // Tổng quãng đường nhỏ nhất (tốt nhất) tìm được
-int segments = 0; // Số đoạn đường đã đi
-int nbR = 0; // Tổng số điểm giao hàng
-int Cmin = INT_MAX; // Chi phí nhỏ nhất giữa hai điểm bất kỳ
+const int MAX_N = 12;
+const int MAX_K = 5;
+const int INF = INT_MAX;
 
-// Hàm cập nhật lộ trình tốt nhất
+int n, K, Q;
+vector<int> d(MAX_N + 1), y(MAX_K + 1), x(MAX_N + 1);
+vector<vector<int>> c(MAX_N + 1, vector<int>(MAX_N + 1));
+vector<bool> visited(MAX_N + 1, false);
+vector<int> load(MAX_K + 1, 0);
+int f = 0, f_min = INF, nbR = 0, segments = 0;
+int Cmin = INF; // Khoảng cách nhỏ nhất trong ma trận c
+vector<int> x_best, y_best;
+
+// Kiểm tra tính hợp lệ khi thử giá trị cho x[s]
+bool checkX(int v, int k) {
+    if (v > 0 && visited[v]) return false;
+    if (load[k] + d[v] > Q) return false;
+    return true;
+}
+
+// Kiểm tra tính hợp lệ khi thử giá trị cho y[k]
+bool checkY(int v, int k) {
+    if (v == 0) return true;
+    if (load[k] + d[v] > Q) return false;
+    if (visited[v]) return false;
+    return true;
+}
+
+// Cập nhật kết quả tối ưu
 void updateBest() {
     if (f < f_min) {
         f_min = f;
+        x_best = x;
+        y_best = y;
     }
 }
 
-// Hàm kiểm tra tính khả thi khi chọn điểm v cho xe k
-bool checkX(int v, int k) {
-    if (v > 0 && visited[v]) return false; // Điểm v đã được chọn
-    if (load[k] + d[v] > Q) return false; // Vượt quá tải trọng
-    return true; // Hợp lệ
-}
-rt
-// Hàm thử giá trị cho x[s], xác định lộ trình xe k
+// Thử giá trị cho x[s]
 void TRY_X(int s, int k) {
-    if (s == 0) { // Nếu quay về điểm xuất phát
+    if (s == 0) {
         if (k < K) {
-            TRY_X(y[k + 1], k + 1); // Tiếp tục thử cho xe tiếp theo
+            TRY_X(y[k + 1], k + 1);
         }
         return;
     }
-    for (int v = 0; v <= N; v++) {
-        if (checkX(v, k)) { // Kiểm tra tính khả thi của điểm v
+
+    for (int v = 0; v <= n; v++) {
+        if (checkX(v, k)) {
             x[s] = v;
             visited[v] = true;
-            f += c[s][v]; // Cập nhật quãng đường
-            load[k] += d[v]; // Cập nhật tải trọng
+            f += c[s][v];
+            load[k] += d[v];
             segments++;
 
             if (v > 0) {
-                if (f + (N + nbR - segments) * Cmin < f_min) {
-                    TRY_X(v, k); // Tiếp tục thử cho điểm tiếp theo
+                if (f + (n + nbR - segments) * Cmin < f_min) {
+                    TRY_X(v, k);
                 }
             } else {
                 if (k == K) {
-                    if (segments == N + nbR) updateBest(); // Cập nhật lộ trình tốt nhất
+                    if (segments == n + nbR) {
+                        updateBest();
+                    }
                 } else {
-                    if (f + (N + nbR - segments) * Cmin < f_min) {
-                        TRY_X(y[k + 1], k + 1); // Chuyển sang xe tiếp theo
+                    if (f + (n + nbR - segments) * Cmin < f_min) {
+                        TRY_X(y[k + 1], k + 1);
                     }
                 }
             }
 
-            // Quay lui
             visited[v] = false;
             f -= c[s][v];
             load[k] -= d[v];
@@ -69,80 +117,76 @@ void TRY_X(int s, int k) {
     }
 }
 
-// Hàm kiểm tra tính khả thi khi chọn điểm v cho điểm đầu tiên của xe k
-bool checkY(int v, int k) {
-    if (v == 0) return true; // Điểm quay về kho
-    if (load[k] + d[v] > Q) return false; // Vượt quá tải trọng
-    if (visited[v]) return false; // Điểm đã được giao
-    return true; // Hợp lệ
-}
-
-// Hàm thử giá trị cho điểm đầu tiên y[k] của xe k
+// Thử giá trị cho y[k]
 void TRY_Y(int k) {
     int s = 0;
     if (y[k - 1] > 0) s = y[k - 1] + 1;
 
-    for (int v = s; v <= N; v++) {
-        if (checkY(v, k)) { // Kiểm tra tính khả thi của điểm v
+    for (int v = s; v <= n; v++) {
+        if (checkY(v, k)) {
             y[k] = v;
-            if (v > 0) segments++;
+            if (v > 0) {
+                segments++;
+            }
             visited[v] = true;
-            f += c[0][v]; // Cập nhật quãng đường
-            load[k] += d[v]; // Cập nhật tải trọng
+            f += c[0][v];
+            load[k] += d[v];
 
             if (k < K) {
-                TRY_Y(k + 1); // Thử cho xe tiếp theo
+                TRY_Y(k + 1);
             } else {
                 nbR = segments;
-                TRY_X(y[1], 1); // Thử lộ trình cho xe đầu tiên
+                TRY_X(y[1], 1);
             }
 
-            // Quay lui
             load[k] -= d[v];
             visited[v] = false;
             f -= c[0][v];
-            if (v > 0) segments--;
+            if (v > 0) {
+                segments--;
+            }
         }
     }
 }
 
-// Hàm giải bài toán
+// Giải quyết bài toán
 void solve() {
     f = 0;
-    f_min = INT_MAX;
-    y.assign(K + 1, 0);
-    x.assign(N + 1, 0);
-    visited.assign(N + 1, false);
-    load.assign(K + 1, 0);
+    f_min = INF;
+    y[0] = 0;
+    Cmin = INF;
 
-    // Tìm chi phí nhỏ nhất
-    for (int i = 0; i <= N; i++) {
-        for (int j = 0; j <= N; j++) {
-            if (i != j) Cmin = min(Cmin, c[i][j]);
+    for (int v = 1; v <= n; v++) {
+        visited[v] = false;
+        for (int i = 0; i <= n; i++) {
+            if (c[v][i] < Cmin) {
+                Cmin = c[v][i];
+            }
         }
     }
 
-    TRY_Y(1); // Thử giá trị cho xe đầu tiên
-    cout << f_min; // Xuất ra tổng quãng đường tối thiểu
+    TRY_Y(1);
+    if (f_min != INF) {
+        cout << f_min << endl;
+    } else {
+        cout << "-1" << endl;
+    }
 }
 
 int main() {
-    cin >> K >> N >> Q;
-
-    d.resize(N + 1);
-    c.resize(N + 1, vector<int>(N + 1));
-
-    for (int i = 1; i <= N; i++) {
+    // Đọc dữ liệu đầu vào
+    cin >> n >> K >> Q;
+    for (int i = 1; i <= n; i++) {
         cin >> d[i];
     }
-
-    for (int i = 0; i <= N; i++) {
-        for (int j = 0; j <= N; j++) {
+    for (int i = 0; i <= n; i++) {
+        for (int j = 0; j <= n; j++) {
             cin >> c[i][j];
         }
     }
 
-    solve(); // Gọi hàm giải bài toán
+    solve();
     return 0;
 }
+
 
