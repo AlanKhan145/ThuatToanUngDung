@@ -39,68 +39,63 @@ Dữ liệu đầu ra:
 
 using namespace std;
 
-const int MAX_N = 12;
-const int MAX_K = 5;
-const int INF = INT_MAX;
+const int MAX_N = 12; // Số lượng khách hàng tối đa
+const int MAX_K = 5;  // Số lượng xe tải tối đa
+const int INF = INT_MAX; // Giá trị vô cùng lớn dùng để so sánh
 
-int n, K, Q;
-vector<int> d(MAX_N + 1), y(MAX_K + 1), x(MAX_N + 1);
-vector<vector<int>> c(MAX_N + 1, vector<int>(MAX_N + 1));
-vector<bool> visited(MAX_N + 1, false);
-vector<int> load(MAX_K + 1, 0);
+int n, K, Q; // n: số lượng khách hàng, K: số lượng xe tải, Q: sức chứa của mỗi xe tải
+vector<int> d(MAX_N + 1), y(MAX_K + 1), x(MAX_N + 1); // d: yêu cầu gói hàng của khách hàng, y: lộ trình, x: khách hàng đang được phục vụ
+vector<vector<int>> c(MAX_N + 1, vector<int>(MAX_N + 1)); // Ma trận khoảng cách giữa các điểm
+vector<bool> visited(MAX_N + 1, false); // Mảng đánh dấu khách hàng đã được thăm hay chưa
+vector<int> load(MAX_K + 1, 0); // Mảng lưu trữ số lượng gói hàng mà mỗi xe tải đã giao
 int f = 0, f_min = INF, nbR = 0, segments = 0;
 int Cmin = INF; // Khoảng cách nhỏ nhất trong ma trận c
-vector<int> x_best, y_best;
+vector<int> x_best, y_best; // Lưu trữ kết quả tối ưu
 
-// Kiểm tra tính hợp lệ khi thử giá trị cho x[s]
-bool checkX(int v, int k) {
-    if (v > 0 && visited[v]) return false;
-    if (load[k] + d[v] > Q) return false;
+
+
+/* Kiểm tra tính hợp lệ khi thử giá trị cho y[k] */
+bool check(int v, int k) {
+    if (v == 0) return true; // Nếu v = 0 (là điểm kho), thì không có vấn đề gì
+    if (load[k] + d[v] > Q) return false; // Kiểm tra nếu tổng số gói hàng vượt quá sức chứa
+    if (visited[v]) return false; // Kiểm tra nếu khách hàng v đã được thăm
     return true;
 }
 
-// Kiểm tra tính hợp lệ khi thử giá trị cho y[k]
-bool checkY(int v, int k) {
-    if (v == 0) return true;
-    if (load[k] + d[v] > Q) return false;
-    if (visited[v]) return false;
-    return true;
-}
-
-// Cập nhật kết quả tối ưu
+/* Cập nhật kết quả tối ưu nếu f nhỏ hơn f_min */
 void updateBest() {
     if (f < f_min) {
         f_min = f;
-        x_best = x;
-        y_best = y;
+        x_best = x; // Cập nhật lộ trình xe tải
+        y_best = y; // Cập nhật lộ trình giao hàng
     }
 }
 
-// Thử giá trị cho x[s]
+/* Thử giá trị cho x[s] (lộ trình xe tải) */
 void TRY_X(int s, int k) {
     if (s == 0) {
         if (k < K) {
-            TRY_X(y[k + 1], k + 1);
+            TRY_X(y[k + 1], k + 1); // Tiến hành thử cho xe tải tiếp theo nếu chưa đủ số xe tải
         }
         return;
     }
 
     for (int v = 0; v <= n; v++) {
-        if (checkX(v, k)) {
-            x[s] = v;
-            visited[v] = true;
-            f += c[s][v];
-            load[k] += d[v];
+        if (check(v, k)) { // Kiểm tra tính hợp lệ của khách hàng v cho xe tải k
+            x[s] = v; // Lưu vị trí của khách hàng v trong lộ trình của xe tải k
+            visited[v] = true; // Đánh dấu khách hàng v đã được thăm
+            f += c[s][v]; // Cộng vào tổng quãng đường
+            load[k] += d[v]; // Cập nhật số lượng gói hàng của xe tải k
             segments++;
 
-            if (v > 0) {
-                if (f + (n + nbR - segments) * Cmin < f_min) {
+            if (v > 0) { // Nếu khách hàng không phải kho, tiếp tục tính toán
+                if (f + (n + nbR - segments) * Cmin < f_min) { // Kiểm tra liệu có thể tối ưu thêm không
                     TRY_X(v, k);
                 }
             } else {
                 if (k == K) {
                     if (segments == n + nbR) {
-                        updateBest();
+                        updateBest(); // Cập nhật kết quả nếu tất cả khách hàng đã được phục vụ
                     }
                 } else {
                     if (f + (n + nbR - segments) * Cmin < f_min) {
@@ -109,7 +104,7 @@ void TRY_X(int s, int k) {
                 }
             }
 
-            visited[v] = false;
+            visited[v] = false; // Quay lại trạng thái ban đầu
             f -= c[s][v];
             load[k] -= d[v];
             segments--;
@@ -117,26 +112,26 @@ void TRY_X(int s, int k) {
     }
 }
 
-// Thử giá trị cho y[k]
+/* Thử giá trị cho y[k] (lộ trình giao hàng từ kho đến khách hàng) */
 void TRY_Y(int k) {
     int s = 0;
     if (y[k - 1] > 0) s = y[k - 1] + 1;
 
     for (int v = s; v <= n; v++) {
-        if (checkY(v, k)) {
+        if (check(v, k)) { // Kiểm tra tính hợp lệ của khách hàng v
             y[k] = v;
             if (v > 0) {
                 segments++;
             }
             visited[v] = true;
-            f += c[0][v];
-            load[k] += d[v];
+            f += c[0][v]; // Cộng quãng đường từ kho đến khách hàng
+            load[k] += d[v]; // Cập nhật số lượng gói hàng của xe tải k
 
             if (k < K) {
-                TRY_Y(k + 1);
+                TRY_Y(k + 1); // Tiếp tục thử cho xe tải tiếp theo
             } else {
-                nbR = segments;
-                TRY_X(y[1], 1);
+                nbR = segments; // Đánh dấu số lượng khách hàng đã được phục vụ
+                TRY_X(y[1], 1); // Tiến hành thử với lộ trình của các xe tải
             }
 
             load[k] -= d[v];
@@ -149,7 +144,7 @@ void TRY_Y(int k) {
     }
 }
 
-// Giải quyết bài toán
+/* Giải quyết bài toán tìm lộ trình tối ưu */
 void solve() {
     f = 0;
     f_min = INF;
@@ -160,16 +155,16 @@ void solve() {
         visited[v] = false;
         for (int i = 0; i <= n; i++) {
             if (c[v][i] < Cmin) {
-                Cmin = c[v][i];
+                Cmin = c[v][i]; // Tìm khoảng cách nhỏ nhất trong ma trận khoảng cách
             }
         }
     }
 
-    TRY_Y(1);
+    TRY_Y(1); // Bắt đầu tìm kiếm lộ trình tối ưu từ xe tải đầu tiên
     if (f_min != INF) {
-        cout << f_min << endl;
+        cout << f_min << endl; // In ra tổng quãng đường tối thiểu
     } else {
-        cout << "-1" << endl;
+        cout << "-1" << endl; // Nếu không tìm được lộ trình hợp lệ
     }
 }
 
@@ -177,16 +172,15 @@ int main() {
     // Đọc dữ liệu đầu vào
     cin >> n >> K >> Q;
     for (int i = 1; i <= n; i++) {
-        cin >> d[i];
+        cin >> d[i]; // Đọc số lượng gói hàng yêu cầu của mỗi khách hàng
     }
     for (int i = 0; i <= n; i++) {
         for (int j = 0; j <= n; j++) {
-            cin >> c[i][j];
+            cin >> c[i][j]; // Đọc ma trận khoảng cách giữa các điểm
         }
     }
 
-    solve();
+    solve(); // Giải quyết bài toán
     return 0;
 }
-
 
