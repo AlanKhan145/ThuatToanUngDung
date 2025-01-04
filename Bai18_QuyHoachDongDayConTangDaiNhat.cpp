@@ -8,7 +8,7 @@ int main(){
   for(int i = 1 ; i <= n ; i++ ){
     cin >> a[i];
   }
-  vector<int>d(n+1,0);
+  vector<int>d(n+1,1);
   d[1] = 1 ;
   int max_kc = 1;
   for(int i = 2 ; i <= n ; i++){
